@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "pry"
 # We don't use this. We require it as convenience for the caller in case they do.
 begin
   require "shopify_api"
@@ -143,17 +144,19 @@ module ShopifyAPIRetry
   end
 
   class REST < Request
-    HTTP_RETRY_AFTER = "Retry-After"
     HTTP_RETRY_STATUS = "429"
 
     protected
 
     def find_handler(error)
       handler = super
-      return handler if handler || (!error.is_a?(ActiveResource::ConnectionError) || !error.response.respond_to?(:code))
+      binding.pry
+      if handler || (!error.is_a?(ShopifyAPI::Errors::HttpResponseError) || !error.respond_to?(:code))
+        return handler
+      end
 
-      handler = handlers[error.response.code] || handlers["#{error.response.code[0]}XX"]
-      handler[:wait] ||= error.response[HTTP_RETRY_AFTER] || config.default_wait if error.response.code == HTTP_RETRY_STATUS
+      handler = handlers[error.code.to_s] || handlers["#{error.code.to_s[0]}XX"]
+      handler[:wait] ||= ShopifyAPIRetry.config.default_wait if error.code.to_s == HTTP_RETRY_STATUS
 
       handler
     end
