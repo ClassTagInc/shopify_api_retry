@@ -26,7 +26,6 @@ Gem::Specification.new do |spec|
   # I don't think we _really_ need this just too lazy to remove now.
   spec.add_development_dependency "shopify_api", ">= 4.0"
 
-  spec.add_development_dependency "pry"
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake", "~> 12.0"

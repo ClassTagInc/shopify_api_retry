@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "pry"
 # We don't use this. We require it as convenience for the caller in case they do.
 begin
   require "shopify_api"
@@ -150,7 +149,6 @@ module ShopifyAPIRetry
 
     def find_handler(error)
       handler = super
-      binding.pry
       if handler || (!error.is_a?(ShopifyAPI::Errors::HttpResponseError) || !error.respond_to?(:code))
         return handler
       end
