@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 2.3"
 
-  spec.add_development_dependency "activeresource", ">= 6.0.0"
+  spec.add_dependency "activeresource", ">= 6.0.0"
 
   # I don't think we _really_ need this just too lazy to remove now.
   spec.add_development_dependency "shopify_api", ">= 4.0"
