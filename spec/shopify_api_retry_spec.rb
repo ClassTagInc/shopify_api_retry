@@ -1,14 +1,8 @@
 require "shopify_api_retry"
 require "minitest/autorun"
 
-TestHTTPResponse = Struct.new(:code, :retry_after) do
-  def [](name)
-    name == "Retry-After" ? (retry_after || "2") : nil
-  end
-end
-
-RATE_LIMITED = ActiveResource::ClientError.new(TestHTTPResponse.new("429"))
-SERVER_ERROR = ActiveResource::ServerError.new(TestHTTPResponse.new("500"))
+RATE_LIMITED = ShopifyAPI::Errors::HttpResponseError.new(code: 429)
+SERVER_ERROR = ShopifyAPI::Errors::HttpResponseError.new(code: 500)
 RETRY_OPTIONS = { "429" => { :tries => 2, :wait => 0 } }.freeze
 
 describe ShopifyAPIRetry::Config do
@@ -90,7 +84,7 @@ describe ShopifyAPIRetry::REST do
           ShopifyAPIRetry::REST.retry RETRY_OPTIONS do
             raise RATE_LIMITED
           end
-        }.must_raise(ActiveResource::ClientError)
+        }.must_raise(ShopifyAPI::Errors::HttpResponseError)
 
         _(e.message).must_match(/Response code = 429/)
       end
@@ -106,7 +100,7 @@ describe ShopifyAPIRetry::REST do
             tried += 1
             raise SERVER_ERROR
           end
-        }.must_raise(ActiveResource::ServerError)
+        }.must_raise(ShopifyAPI::Errors::HttpResponseError)
 
         _(tried).must_equal(2)
 
@@ -114,9 +108,9 @@ describe ShopifyAPIRetry::REST do
         _ {
           ShopifyAPIRetry::REST.retry options do
             tried += 1
-            raise ActiveResource::ServerError.new(TestHTTPResponse.new("520"))
+            raise ShopifyAPI::Errors::HttpResponseError.new(code: 520)
           end
-        }.must_raise(ActiveResource::ServerError)
+        }.must_raise(ShopifyAPI::Errors::HttpResponseError)
 
         _(tried).must_equal(2)
       end
@@ -228,7 +222,7 @@ describe ShopifyAPIRetry::REST do
           tried += 1
           raise RATE_LIMITED
         end
-        }.must_raise(ActiveResource::ClientError)
+        }.must_raise(ShopifyAPI::Errors::HttpResponseError)
 
         _(tried).must_equal(2)
 
@@ -250,7 +244,7 @@ describe ShopifyAPIRetry::REST do
 
         begin
           ShopifyAPIRetry::REST.retry do
-            raise ActiveResource::ClientError.new(TestHTTPResponse.new("429", "3"))
+            raise ShopifyAPI::Errors::HttpResponseError.new(code: 429)
           end
         rescue
           raise $! unless $!.message == RATE_LIMITED.message
